@@ -9,9 +9,9 @@ BASE_URL = os.getenv("OPENROUTER_BASE_URL", default="https://openrouter.ai/api/v
 
 
 def main():
-    p = argparse.ArgumentParser()
-    p.add_argument("-p", required=True)
-    args = p.parse_args()
+    p = argparse.ArgumentParser() // init
+    p.add_argument("-p", required=True) // add argument flag
+    args = p.parse_args() // generate args object
 
     if not API_KEY:
         raise RuntimeError("OPENROUTER_API_KEY is not set")
@@ -30,7 +30,7 @@ def main():
     print("Logs from your program will appear here!", file=sys.stderr)
 
     # TODO: Uncomment the following line to pass the first stage
-    # print(chat.choices[0].message.content)
+    print(chat.choices[0].message.content)
 
 
 if __name__ == "__main__":
