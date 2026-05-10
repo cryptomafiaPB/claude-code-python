@@ -2,17 +2,39 @@ import argparse
 import os
 import sys
 
+from dotenv import load_dotenv
 from openai import OpenAI
+
+# Load environment variables from .env file
+load_dotenv()
 
 API_KEY = os.getenv("OPENROUTER_API_KEY")
 BASE_URL = os.getenv("OPENROUTER_BASE_URL", default="https://openrouter.ai/api/v1")
+
+
+tools = [
+    {
+        "type": "function",
+        "function": {
+            "name": "Read",
+            "description": "Read and return content of a file",
+            "parameters": {
+                "file_path": {
+                    "type": "string",
+                    "description": "The path of the file to read"
+                }
+            },
+            "required": ["file_path"]
+        }
+    }
+]
 
 
 def main():
     p = argparse.ArgumentParser() # init
     p.add_argument("-p", required=True) # add argument flag
     args = p.parse_args() # generate args object
-
+    
     if not API_KEY:
         raise RuntimeError("OPENROUTER_API_KEY is not set")
 
@@ -21,6 +43,8 @@ def main():
     chat = client.chat.completions.create(
         model="anthropic/claude-haiku-4.5",
         messages=[{"role": "user", "content": args.p}],
+        max_completion_tokens=5000,
+        tools=tools
     )
 
     if not chat.choices or len(chat.choices) == 0:
@@ -31,6 +55,10 @@ def main():
 
     # TODO: Uncomment the following line to pass the first stage
     print(chat.choices[0].message.content)
+
+    ############### Local testing code ################
+    # i = input("Enter your message: ")
+    # print(f"You entered: {i}")
 
 
 if __name__ == "__main__":
