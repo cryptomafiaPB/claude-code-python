@@ -6,6 +6,7 @@ from typing import Any
 
 from dotenv import load_dotenv
 from openai import OpenAI
+from openai.types.chat import ChatCompletionToolParam, ChatCompletionMessageParam
 
 # Load environment variables from .env file
 load_dotenv()
@@ -24,7 +25,7 @@ def Read(file_path: str) -> str:
     except Exception as e:
         return f"Error reading file: {str(e)}"
 
-tools = [
+tools: list[ChatCompletionToolParam] = [
     {
         "type": "function",
         "function": {
@@ -32,17 +33,20 @@ tools = [
             "description": "Read and return content of a file",
             "parameters": {
                 "type": "object",
-            "properties": {
-                "file_path": {
-                "type": "string",
-                "description": "The path to the file to read"
-                }
-            },
-            "required": ["file_path"]
+                "properties": {
+                    "file_path": {
+                        "type": "string",
+                        "description": "The path to the file to read"
+                    }
+                },
+                "required": ["file_path"]
+            }
         }
     }
-    }
 ]
+
+
+messages: list[ChatCompletionMessageParam] = []
 
 
 def main():
@@ -53,15 +57,18 @@ def main():
         help="Prompt to send to the Claude model"
     ) # add argument flag
     args = p.parse_args() # generate args object
-    
+
     if not API_KEY:
         raise RuntimeError("OPENROUTER_API_KEY is not set")
+
+    # Append user message to messages list
+    messages.append({"role": "user", "content": args.p})
 
     client = OpenAI(api_key=API_KEY, base_url=BASE_URL)
 
     chat = client.chat.completions.create(
         model="anthropic/claude-haiku-4.5",
-        messages=[{"role": "user", "content": args.p}],
+        messages=messages,
         max_completion_tokens=5000,
         tools=tools
     )
