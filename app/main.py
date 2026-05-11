@@ -2,6 +2,7 @@ import argparse
 import os
 import sys
 import json
+from typing import Any
 
 from dotenv import load_dotenv
 from openai import OpenAI
@@ -46,7 +47,11 @@ tools = [
 
 def main():
     p = argparse.ArgumentParser() # init
-    p.add_argument("-p", required=True) # add argument flag
+    p.add_argument(
+        "-p",
+        required=True,
+        help="Prompt to send to the Claude model"
+    ) # add argument flag
     args = p.parse_args() # generate args object
     
     if not API_KEY:
@@ -68,11 +73,15 @@ def main():
     print("Logs from your program will appear here!", file=sys.stderr)
 
     # TODO: Uncomment the following line to pass the first 
-    if chat.choices[0].message.tool_calls:
-        if chat.choices[0].message.tool_calls[0].function.name == "Read":
-            file_path = json.loads(chat.choices[0].message.tool_calls[0].function.arguments)
+    tool_calls = getattr(chat.choices[0].message, "tool_calls", None)
+    if tool_calls:
+        tool_call = tool_calls[0]
+        try:
+            file_path = json.loads(tool_call.function.arguments)
             content = Read(file_path["file_path"])
             print(content)
+        except Exception as e:
+            print(f"Error parsing tool call arguments: {e}. Arguments: {getattr(tool_call.function, 'arguments', None)}", file=sys.stderr)
     else:
         print(chat.choices[0].message.content)
 
