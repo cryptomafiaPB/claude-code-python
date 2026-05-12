@@ -20,14 +20,27 @@ current_iteration = 0
 
 ############ TOOL DEFINITIONS ############
 
-def Read(file_path: str) -> str:
+def read_file(file_path: str) -> str:
     """Read and return content of a file"""
     try:
         with open(file_path, 'r') as f:
-            return f.read()
+            content = f.read()
+            f.close()
+            return content
     except Exception as e:
         return f"Error reading file: {str(e)}"
 
+def write_file(file_path: str, content: str) -> str:
+    """Write content to a file"""
+    try:
+        # If file does not exist, create it & if it does exist, overwrite it with new content
+        with open(file_path, 'w') as f:
+            f.write(content)
+            f.close()
+        
+        return "File written successfully"
+    except Exception as e:
+        return f"Error writing file: {str(e)}"
 
 ################ HELPER FUNCTIONS ################
 
@@ -73,7 +86,7 @@ tools: list[ChatCompletionToolParam] = [
     {
         "type": "function",
         "function": {
-            "name": "Read",
+            "name": "read_file",
             "description": "Read and return content of a file",
             "parameters": {
                 "type": "object",
@@ -86,11 +99,33 @@ tools: list[ChatCompletionToolParam] = [
                 "required": ["file_path"]
             }
         }
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "write_file",
+            "description": "Write content to a file",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "file_path": {
+                        "type": "string",
+                        "description": "The path to the file to write"
+                    },
+                    "content": {
+                        "type": "string",
+                        "description": "The content to write to the file"
+                    }
+                },
+                "required": ["file_path", "content"]
+            }
+        }
     }
 ]
 
 TOOL_MAP = {
-    "Read": Read
+    "read_file": read_file,
+    "write_file": write_file
 }
 
 messages: list[ChatCompletionMessageParam] = []
