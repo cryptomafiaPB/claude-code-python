@@ -1,6 +1,7 @@
 import argparse
 from json import tool
 import os
+import subprocess
 import sys
 import json
 from typing import Any
@@ -41,6 +42,26 @@ def write_file(file_path: str, content: str) -> str:
         return "File written successfully"
     except Exception as e:
         return f"Error writing file: {str(e)}"
+    
+def run_bash_cmd(command: str) -> str:
+    """Execute the shell command"""
+    try:
+        # parse command
+        cmd = command.split()
+        print(command, cmd)
+        # Run subprocess
+        result = subprocess.run(
+            cmd,  # list of command and args
+            capture_output=True,  # Saves stdout and stderr internally
+            text=True,  # Returns strings instead of bytes
+            check=True  # Raises CalledProcessError if command fails
+        )
+        print(result.stdout.strip())
+        return result.stdout.strip()
+    except Exception as e:
+        print(e)
+        return f"Error executing command {command}: {str(e)}"
+    
 
 ################ HELPER FUNCTIONS ################
 
@@ -120,12 +141,30 @@ tools: list[ChatCompletionToolParam] = [
                 "required": ["file_path", "content"]
             }
         }
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "run_bash_cmd",
+            "description": "Execute a shell command",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "command": {
+                        "type": "string",
+                        "description": "The command to execute"
+                    }
+                },
+                "required": ["command"]
+            }
+        }
     }
 ]
 
 TOOL_MAP = {
     "read_file": read_file,
-    "write_file": write_file
+    "write_file": write_file,
+    "run_bash_cmd": run_bash_cmd
 }
 
 messages: list[ChatCompletionMessageParam] = []
