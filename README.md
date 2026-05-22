@@ -14,6 +14,10 @@ calling, agent loop, and how to integrate multiple tools into an AI assistant.
 **Note**: If you're viewing this repo on GitHub, head over to
 [codecrafters.io](https://codecrafters.io) to try the challenge.
 
+## Important
+
+for using run_code tool, which is responsible for running code in sandbox environment, you need to run piston (general purpose code execution engine) locally. You can find instructions on how to do that in the [piston repository](https://github.com/engineer-man/piston).
+
 # Passing the first stage
 
 The entry point for your `claude-code` implementation is in `app/main.py`. Study

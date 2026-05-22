@@ -4,7 +4,8 @@ import os
 import subprocess
 import sys
 import json
-from typing import Any
+from typing import Any, Dict, List, TypedDict
+import requests
 
 from dotenv import load_dotenv
 from openai import OpenAI
@@ -20,6 +21,10 @@ max_iteration = 12
 current_iteration = 0
 
 ############ TOOL DEFINITIONS ############
+
+class FileDict(TypedDict):
+    name: str
+    content: str
 
 def read_file(file_path: str) -> str:
     """Read and return content of a file"""
@@ -61,6 +66,21 @@ def run_bash_cmd(command: str) -> str:
     except Exception as e:
         print(e)
         return f"Error executing command {command}: {str(e)}"
+
+def run_code(language: str, files: List[FileDict], stdin: str, args: List[str]) -> str:
+    """ Runs the given code, using the given runtime and arguments, returning the result. """
+    json_data = {
+                    "language": language,
+                    "version": "3",
+                    "files": files,
+                    "stdin": stdin,
+                    "args": args
+                }
+    response = requests.post('http://localhost:2000/api/v2/execute', json=json_data)
+    
+    print(f"run_code: {json_data}\nCode execution response: {response.text}")
+
+    return response.text
     
 
 ################ HELPER FUNCTIONS ################
@@ -158,13 +178,63 @@ tools: list[ChatCompletionToolParam] = [
                 "required": ["command"]
             }
         }
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "run_code",
+            "description": "Execute code in sandbox environment, return execution output results.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "language": {
+                        "type": "string",
+                        "description": "Programming language to execute, e.g. python, javascript, cpp."
+                    },
+                    "files": {
+                        "type": "array",
+                        "description": "List of files to provide to the execution environment.",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "name": {
+                                    "type": "string",
+                                    "description": "name of file. e.g. main.py or index.js ."
+                                },
+                                "content": {
+                                    "type": "string",
+                                    "description": "UTF-8 text content of the file."
+                                }
+                            },
+                            "required": ["name", "content"],
+                            "additionalProperties": False
+                        }
+                    },
+                    "stdin": {
+                        "type": "string",
+                        "description": "Standard input passed to the program."
+                    },
+                    "args": {
+                        "type": "array",
+                        "description": "Command-line arguments passed to the program.",
+                        "items": {
+                            "type": "string"
+                        }
+                    }
+                },
+                "required": ["language", "files", "stdin", "args"],
+                "additionalProperties": False
+            }
+        }
     }
 ]
+
 
 TOOL_MAP = {
     "read_file": read_file,
     "write_file": write_file,
-    "run_bash_cmd": run_bash_cmd
+    "run_bash_cmd": run_bash_cmd,
+    "run_code": run_code
 }
 
 messages: list[ChatCompletionMessageParam] = []
